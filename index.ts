@@ -30,9 +30,20 @@ const admin = await Admin.findOne({username});
     res.status(200).json({message:"Admin successfully CREATED"});
 
   }
-
 })
 
+app.post('/admin/login', async (req, res) => {
+  const {username, password} = req.headers;
+  console.log("i am in login route");
+  console.log("admin login", username, password);
+  const admin = await Admin.findOne({username, password});
+  if (admin){
+    return res.json({message:"Admin logged in successfully"});
+  } 
+  else {
+    return res.status(404).json({message:"Incorrect username or password"});
+  }
+});
 
 
 app.listen(port,() => {
