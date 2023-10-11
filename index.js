@@ -7,10 +7,32 @@ const port = 8000;
 const secretKey = 'MySecret#321';
 app.use(express.json());
 
-function generateJwt (input) {
+const generateJwt = (input) =>{
   const generatedJwt = jwt.sign({input}, secretKey, {expiresIn:'1h'});
   return generatedJwt;
 }
+
+const authenticateJwt = (req,res,next) =>{
+  console.log("entered in jwtauthentication");
+  const authHeader = req.headers.authorization;
+  console.log("authHeader: " + authHeader);
+    if (authHeader) {
+      const token = authHeader.split(' ')[1];
+      console.log("Token from jwtAuthentication",token);
+      jwt.verify(token,secretKey,(err,user) =>{
+        if (err) {
+          return res.status(403);
+        }
+        req.user = user;
+        next();
+      });
+
+    }
+    else {
+      return res.status(401);
+    }
+};
+
 
 //define Schema
 const adminSchema = mongoose.Schema({
@@ -18,8 +40,17 @@ const adminSchema = mongoose.Schema({
   password: {type:String, required:true}
 });
 
+const courseSchema = mongoose.Schema({
+  title: {type:String},
+  description: {type:String},
+  price: {type:Number},
+  imageLink: {type:String},
+  published: {type:Boolean}
+});
+
 //define models
 const Admin = mongoose.model('Admin',adminSchema);
+const Course = mongoose.model('Course',courseSchema);
 
 // connect to Mongodb
 mongoose.connect('mongodb+srv://nodejsUser:nodejsUser1@cluster0.as6c2vp.mongodb.net/nodejs');
@@ -53,6 +84,18 @@ app.post('/admin/login', async (req, res) => {
     return res.status(404).json({message:"Incorrect username or password"});
   }
 });
+
+// //POST /admin/courses Create new courses
+ app.post('/admin/courses', authenticateJwt, async (req,res) => {
+  const course = new Course(req.body);
+  console.log("entered course:", course);
+  await course.save();
+  return res.json({message:"Course created successfully", CourseID: course.id}); 
+});
+
+
+//PUT /admin/courses/
+//GET /admin/courses Description:
 
 
 app.listen(port,() => {
