@@ -1,9 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = 8000;
 
+const secretKey = 'MySecret#321';
 app.use(express.json());
+
+function generateJwt (input) {
+  const generatedJwt = jwt.sign({input}, secretKey, {expiresIn:'1h'});
+  return generatedJwt;
+}
 
 //define Schema
 const adminSchema = mongoose.Schema({
@@ -27,10 +34,11 @@ const admin = await Admin.findOne({username});
   else{
     const newAdmin = new Admin({username, password});
     await newAdmin.save();
-    res.status(200).json({message:"Admin successfully CREATED"});
+    const token = generateJwt(username);
+    res.status(200).json({message:"Admin successfully CREATED", token: token});
 
   }
-})
+});
 
 app.post('/admin/login', async (req, res) => {
   const {username, password} = req.headers;
@@ -38,7 +46,8 @@ app.post('/admin/login', async (req, res) => {
   console.log("admin login", username, password);
   const admin = await Admin.findOne({username, password});
   if (admin){
-    return res.json({message:"Admin logged in successfully"});
+    const token = generateJwt(username);
+    return res.json({message:"Admin logged in successfully", Token: token});
   } 
   else {
     return res.status(404).json({message:"Incorrect username or password"});
