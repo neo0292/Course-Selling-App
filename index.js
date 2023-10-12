@@ -1,23 +1,25 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
+const express = require('express');  // for server
+const mongoose = require('mongoose'); // for Mongodb 
+const jwt = require('jsonwebtoken');  // for Authentication
 const app = express();
 const port = 8000;
 
 const secretKey = 'MySecret#321';
-app.use(express.json());
+app.use(express.json());  // middleware for obtainig input from user in req.body format
 
-const generateJwt = (input) =>{
+//function to generate token
+const generateJwt = (input) =>{       
   const generatedJwt = jwt.sign({input}, secretKey, {expiresIn:'1h'});
   return generatedJwt;
 }
 
+//middleware to verify routes using token
 const authenticateJwt = (req,res,next) =>{
   console.log("entered in jwtauthentication");
   const authHeader = req.headers.authorization;
   console.log("authHeader: " + authHeader);
     if (authHeader) {
-      const token = authHeader.split(' ')[1];
+      const token = authHeader.split(' ')[1]; // split authHeader into starting from space in it & take 1st //string  after space
       console.log("Token from jwtAuthentication",token);
       jwt.verify(token,secretKey,(err,user) =>{
         if (err) {
@@ -34,7 +36,7 @@ const authenticateJwt = (req,res,next) =>{
 };
 
 
-//define Schema
+//define Schema for MONGODB (DOCUMENTS STRUCTURE)
 const adminSchema = mongoose.Schema({
   username: {type:String, required:true},
   password: {type:String, required:true}
@@ -48,11 +50,11 @@ const courseSchema = mongoose.Schema({
   published: {type:Boolean}
 });
 
-//define models
+//define models for schemas (collection/Table creation)
 const Admin = mongoose.model('Admin',adminSchema);
 const Course = mongoose.model('Course',courseSchema);
 
-// connect to Mongodb
+// connect to Mongodb with nodejs name as  database
 mongoose.connect('mongodb+srv://nodejsUser:nodejsUser1@cluster0.as6c2vp.mongodb.net/nodejs');
 
 // handle Admin routes
@@ -95,6 +97,21 @@ app.post('/admin/login', async (req, res) => {
 
 
 //PUT /admin/courses/
+app.put('/admin/courses/:courseId', authenticateJwt, async (req, res) => {
+  const courseId = req.params.courseId
+  const course = new Course(req.body)
+  const courseExist = await Course.findByIdAndUpdate(courseId,req.body, {new:true});
+  if (courseExist){
+    await courseExist.save();
+    return res.status(200).json({courseExist});
+  }
+  else{
+    res.status(404).json({message:"Course not found"});
+  }
+})
+
+
+
 //GET /admin/courses Description:
 
 
