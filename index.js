@@ -105,11 +105,24 @@ app.put('/admin/courses/:courseId', authenticateJwt, async (req, res) => {
   else{
     res.status(404).json({message:"Course not found"});
   }
-})
+});
 
 
 
-//GET /admin/courses Description:
+//GET /admin/courses return all courses in course collection
+
+app.get('/admin/courses', authenticateJwt, async(req, res)=>{
+const courses = await Course.find({});    // get all courses from course collection
+if (courses){
+  return res.status(200).json({message:"All courses from Course collection:",courses});
+}
+else{
+  return res.jason({message: "no courses found"});
+}
+
+
+});
+
 
 
 app.listen(port,() => {
