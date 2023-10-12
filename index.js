@@ -147,13 +147,17 @@ app.get('/users/login', async (req,res)=>{
   const user= await User.findOne({username,password});
   if (user) {
     token = generateJwt(username);
-    res.status(200).json({message: "user logged in successfully", token:"token"});
+    res.status(200).json({message: "user logged in successfully", token:token});
     
   } else {
     res.status(404).json({message: "invalid username or password"});
   }
 })
 //GET /users/courses Description: Lists all the courses
+app.get('/users/courses', authenticateJwt, async (req,res)=>{
+  const courses = await Course.find({});
+  return res.status(200).json({courses: courses});
+});
 //POST /users/courses/:courseId Description: Purchases a course.
 //GET /users/purchasedCourses Description: Lists all the courses purchased by the user.
 
