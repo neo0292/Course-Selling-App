@@ -142,6 +142,17 @@ app.post('/users/signup', async(req, res)=>{
 
 
 //POST /users/login Description: Authenticates a user. It requires the user to send username and password in the headers.
+app.get('/users/login', async (req,res)=>{
+  const {username,password} = req.headers;
+  const user= await User.findOne({username,password});
+  if (user) {
+    token = generateJwt(username);
+    res.status(200).json({message: "user logged in successfully", token:"token"});
+    
+  } else {
+    res.status(404).json({message: "invalid username or password"});
+  }
+})
 //GET /users/courses Description: Lists all the courses
 //POST /users/courses/:courseId Description: Purchases a course.
 //GET /users/purchasedCourses Description: Lists all the courses purchased by the user.
