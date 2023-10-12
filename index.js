@@ -96,14 +96,11 @@ app.post('/admin/login', async (req, res) => {
 });
 
 
-//PUT /admin/courses/
+//PUT /admin/courses/ Update old courses
 app.put('/admin/courses/:courseId', authenticateJwt, async (req, res) => {
-  const courseId = req.params.courseId
-  const course = new Course(req.body)
-  const courseExist = await Course.findByIdAndUpdate(courseId,req.body, {new:true});
-  if (courseExist){
-    await courseExist.save();
-    return res.status(200).json({courseExist});
+  const course = await Course.findByIdAndUpdate(req.params.courseId,req.body, {new:true});
+  if (course){
+    return res.status(200).json({message:'Course updated successfully',course: course});
   }
   else{
     res.status(404).json({message:"Course not found"});
