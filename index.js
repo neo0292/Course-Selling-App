@@ -7,6 +7,8 @@ const port = 8000;
 const secretKey = 'MySecret#321';
 app.use(express.json());  // middleware for obtainig input from user in req.body format
 
+
+
 //function to generate token
 const generateJwt = (input) =>{       
   const generatedJwt = jwt.sign({input}, secretKey, {expiresIn:'1h'});
@@ -50,9 +52,15 @@ const courseSchema = mongoose.Schema({
   published: {type:Boolean}
 });
 
+const userSchema = mongoose.Schema({
+  username:{type:String, required:true},
+  password:{type:String, required: true}
+});
+
 //define models for schemas (collection/Table creation)
 const Admin = mongoose.model('Admin',adminSchema);
 const Course = mongoose.model('Course',courseSchema);
+const User = mongoose.model('User', userSchema);
 
 // connect to Mongodb with nodejs name as  database
 mongoose.connect('mongodb+srv://nodejsUser:nodejsUser1@cluster0.as6c2vp.mongodb.net/nodejs');
@@ -107,10 +115,7 @@ app.put('/admin/courses/:courseId', authenticateJwt, async (req, res) => {
   }
 });
 
-
-
 //GET /admin/courses return all courses in course collection
-
 app.get('/admin/courses', authenticateJwt, async(req, res)=>{
 const courses = await Course.find({});    // get all courses from course collection
 if (courses){
@@ -118,10 +123,30 @@ if (courses){
 }
 else{
   return res.jason({message: "no courses found"});
-}
+}});
 
 
+
+app.post('/users/signup', async(req, res)=>{
+  const {username,password} = req.body;
+  const user= await User.findOne({username});
+  if (user) {
+    return res.status(403).json({message: "User already exists with username:", username});
+  } else {
+    const newUser= new User({username,password});
+    await newUser.save();
+    const token = generateJwt(username);
+    return res.status(200).json({message: "User created successfully", token: token});
+  } 
 });
+
+
+//POST /users/login Description: Authenticates a user. It requires the user to send username and password in the headers.
+//GET /users/courses Description: Lists all the courses
+//POST /users/courses/:courseId Description: Purchases a course.
+//GET /users/purchasedCourses Description: Lists all the courses purchased by the user.
+
+
 
 
 
