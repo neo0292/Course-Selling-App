@@ -26,7 +26,7 @@ const authenticateJwt = (req,res,next) =>{
       jwt.verify(token,secretKey,(err,user) =>{
         if (err) {
           return res.status(403);
-        }
+        }             
         req.user = user;
         next();
       });
@@ -54,7 +54,8 @@ const courseSchema = mongoose.Schema({
 
 const userSchema = mongoose.Schema({
   username:{type:String, required:true},
-  password:{type:String, required: true}
+  password:{type:String, required: true},
+  purchasedCourses: [{type:mongoose.Schema.Types.ObjectId, ref:'Course'}]
 });
 
 //define models for schemas (collection/Table creation)
@@ -158,8 +159,42 @@ app.get('/users/courses', authenticateJwt, async (req,res)=>{
   const courses = await Course.find({});
   return res.status(200).json({courses: courses});
 });
-//POST /users/courses/:courseId Description: Purchases a course.
+
+//POST /users/courses/:courseId Description: Purchases a course bu user.
+app.post('/users/courses/:courseId', authenticateJwt, async (req,res)=>{
+  const course = await Course.findById(req.params.courseId);
+  console.log("You are trying to purchase course:",course);
+  if (course) {
+    console.log(" what is req.user:",req.user);
+    console.log(" what is req.user.username:",{username:req.user.username});
+    const user = await User.findOne({username:req.user.input});
+        if (user) {
+        user.purchasedCourses.push(course);
+        await user.save();
+        return res.status(200).json({message: 'Course purchased successfully', course: course});
+      
+        } else {
+        return res.status(404).json({message: 'user not found'});
+        }
+    
+  } else {
+    return res.status(404).json({message: 'course not found'});
+  }
+});
+
+
+
 //GET /users/purchasedCourses Description: Lists all the courses purchased by the user.
+app.get('/users/purchasedCourses', authenticateJwt, async (req, res) => {
+  console.log("entered in purchased courses");
+  const user = await User.findOne({username: req.user.input}).populate('purchasedCourses');
+  if(user){
+    return res.json({purchasedCourses: user.purchasedCourses|| []});
+  }
+  else{
+    return res.status(403).json({message: 'user not found'});
+  }
+});
 
 
 
