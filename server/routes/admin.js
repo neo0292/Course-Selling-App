@@ -22,7 +22,8 @@ router.post('/signup', async (req, res) => {
   });
   
   router.post('/login', async (req, res) => {
-    const {username, password} = req.headers;
+    console.log(req.body);
+    const {username, password} = req.body;
     console.log("i am in login route");
     console.log("admin login", username, password);
     const admin = await Admin.findOne({username, password});
